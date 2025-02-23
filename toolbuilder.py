@@ -154,8 +154,8 @@ with st.sidebar:
     st.write(
         "This app allows you to define a function specification and "
         "extract features from a document using OpenAI's function calling "
-        "capabilities."
-        )
+        "capabilities. "
+        "See [OpenAI's documentation](https://platform.openai.com/docs/guides/gpt/function-calling)")
 
     try:
         st.session_state['client'] = OpenAI()
@@ -227,9 +227,14 @@ with st.form("content_form"):
         submitted = st.form_submit_button("Submit", on_click=submit_query)
 
 
-if st.button("Load Example Data"):
-    load_example_modal()
-
+col1, __ = st.columns(2)
+with col1:
+    subcol1, subcol2 = st.columns([0.3, 0.7], vertical_alignment="center")
+    with subcol1:
+        if st.button("Load Example Data"):
+            load_example_modal()
+    with subcol2:
+        st.write('(Reload page to clear all)')
 
 col1, col2 = st.columns(2)
 
