@@ -44,52 +44,6 @@ example_prompt = """
 Extract the features from the pathology report
 """.strip()
 
-example_tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "get_features",
-            "description": """Get gleason score, stage, and other
-            features from a prostate cancer pathology report""",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "label": {
-                        "type": "string",
-                        "description": "A letter identifying the biopsy",
-                    },
-                    "gleason_score": {
-                        "type": "string",
-                        "description": "The gleason score of the prostate cancer",
-                    },
-                    "diagnosis": {
-                        "type": "string",
-                        "description": """Histological diagnosis
-                            of the prostate cancer. Choose acinar
-                            adenocarcinoma for adencarcinoma not
-                            otherwise specified""",
-                        "enum": [
-                            "acinar adenocarcinoma",
-                            "ductal adenocarcinoma",
-                            "transitional cell carcinoma",
-                            "squamous cell carcinoma",
-                            "small cell carcinoma",
-                            "benign",
-                            "other",
-                        ],
-                    },
-                    "biopsy_location": {
-                        "type": "string",
-                        "description": "Anatomic location of the biopsy within the prostate",
-                    },
-
-                },
-                "required": ["gleason_score", "diagnosis"],
-            },
-        }
-    }
-]
-
 
 def get_features(client: OpenAI,
                  context: str,
@@ -134,11 +88,15 @@ def feature_table(response: dict) -> list[dict]:
 
 def test_chat():
     client = OpenAI()
+
+    with open('get_prostate_biopsies.json') as f:
+        tools = json.load(f)
+
     response = get_features(
         client=client,
         context=example_context,
         prompt=example_prompt,
-        tools=example_tools,
+        tools=[tools],
         model='gpt-4o-mini',
         temperature=1.0,
         n=1,
@@ -151,4 +109,3 @@ def test_chat():
 
 if __name__ == "__main__":
     test_chat()
-
