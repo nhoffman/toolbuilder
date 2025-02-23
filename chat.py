@@ -1,3 +1,10 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "openai",
+# ]
+# ///
+
 import logging
 import json
 
@@ -127,20 +134,21 @@ def feature_table(response: dict) -> list[dict]:
 
 def test_chat():
     client = OpenAI()
-    response = chat.get_features(
+    response = get_features(
         client=client,
-        context=context,
-        prompt=prompt,
-        tools=tools,
+        context=example_context,
+        prompt=example_prompt,
+        tools=example_tools,
         model='gpt-4o-mini',
         temperature=1.0,
         n=1,
     )
 
-    features = chat.feature_table(response)
+    features = feature_table(response)
     for feature in features:
         print(feature)
 
 
 if __name__ == "__main__":
     test_chat()
+
