@@ -1,0 +1,41 @@
+{
+  "type": "function",
+  "function": {
+    "name": "get_prostate_biopsies",
+    "description": "Provide details about each biopsy in the report. ",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "A letter identifying the biopsy"
+        },
+        "gleason_score": {
+          "type": "string",
+          "description": "Gleason score of the biopsy"
+        },
+        "biopsy_length": {
+          "type": "number",
+          "description": "Length of the entire biopsy core in cm"
+        },
+        "cancer_length": {
+          "type": "number",
+          "description": "Length of the cancer within the biopsy core"
+        },
+        "diagnosis": {
+          "type": "string",
+          "description": "Diagnosis of the biopsy",
+          "enum": [
+            "benign",
+            "malignant"
+          ]
+        }
+      },
+      "required": [
+        "label",
+        "gleason_score",
+        "diagnosis"
+      ]
+    }
+  }
+}
