@@ -96,6 +96,11 @@ def get_uploaded(key):
         return st.session_state['uploaded_data'].get(key)
 
 
+def load_examples():
+    st.session_state["context"] = utils.example_context
+    st.session_state["prompt"] = utils.example_prompt
+
+
 def get_or_reset(key, default=None, condition=True):
     if val := get_uploaded(key):
         if key in st.session_state and condition:
@@ -177,7 +182,10 @@ st.header('Feature extraction using OpenAI function calling')
 with st.form("content_form"):
     form_col1, form_col2 = st.columns(2)
     with form_col1:
-        st.text_area(
+        if "context" not in st.session_state:
+            st.session_state["context"] = ""
+
+        context = st.text_area(
             "Document Content", key="context",
             placeholder="Enter the document content here",
             height=300)
@@ -205,6 +213,10 @@ with st.form("content_form"):
             )
 
         submitted = st.form_submit_button("Submit", on_click=submit_query)
+
+
+st.button("Load Example Text", on_click=load_examples)
+
 
 col1, col2 = st.columns(2)
 
