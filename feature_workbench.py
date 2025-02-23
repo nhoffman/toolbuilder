@@ -1,8 +1,8 @@
+import os
 from enum import Enum
 import json
 
 from openai import OpenAI, OpenAIError
-
 import streamlit as st
 
 import utils
@@ -122,11 +122,53 @@ def on_click_required_changed(i):
     st.session_state[f"feat_required_{i}_changed"] = True
 
 
-try:
-    st.session_state["client"] = OpenAI()
-except OpenAIError:
-    st.error('Set environment variables OPENAI_API_KEY, OPENAI_BASE_URL')
-    st.stop()
+def get_openai_client():
+    try:
+        st.session_state["client"] = OpenAI(
+            api_key=getval('api_key'),
+            base_url=getval('base_url')
+        )
+    except OpenAIError:
+        st.error('Set environment variables OPENAI_API_KEY, OPENAI_BASE_URL')
+
+
+with st.sidebar:
+    st.title("Feature Workbench")
+    st.write(
+        "This app allows you to define a function specification and "
+        "extract features from a document using OpenAI's function calling "
+        "capabilities."
+        )
+
+    try:
+        st.session_state['client'] = OpenAI()
+    except OpenAIError:
+        st.text_input(
+            "OpenAI API Key", type="password",
+            key="api_key",
+            on_change=get_openai_client)
+
+        st.text_input(
+            "Base URL (optional)",
+            placeholder="https://api.openai.com/v1",
+            key="base_url",
+            on_change=get_openai_client)
+
+        get_openai_client()
+
+    if st.button("Test API Key"):
+        try:
+            completion = getval('client').chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "user", "content": "What is the capital of France?"}
+                ]
+            )
+            # st.write(completion.choices[0].message.content)
+            st.success("API key is valid")
+        except OpenAIError as e:
+            st.error(e)
+
 
 st.header('Feature extraction using OpenAI function calling')
 
@@ -296,11 +338,12 @@ with col2:
         spec_json = json.dumps(st.session_state['tool_spec'], indent=2)
         st.markdown(f"```json\n{spec_json}\n```")
 
-    st.download_button(
-        f"Download {func_name}.json",
-        data=json.dumps(st.session_state['tool_spec'], indent=2),
-        mime="application/json",
-        file_name=f"{func_name}.json")
+    if getval("func_name") and getval("tool_spec"):
+        st.download_button(
+            f"Download {func_name}.json",
+            data=json.dumps(st.session_state['tool_spec'], indent=2),
+            mime="application/json",
+            file_name=f"{func_name}.json")
 
     st.file_uploader(
         "Upload a JSON file containing a tool specification.",
