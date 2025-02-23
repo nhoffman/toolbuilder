@@ -55,36 +55,38 @@ def get_nested(d, *args):
     return d
 
 
+def set_tool_spec(tool_spec):
+    output = {}
+    output['func_name'] = get_nested(
+        tool_spec, 'function', 'name')
+    output['func_desc'] = get_nested(
+        tool_spec, 'function', 'description')
+
+    properties = get_nested(
+        tool_spec, 'function', 'parameters', 'properties')
+
+    required = set(get_nested(
+        tool_spec, 'function', 'parameters', 'required'))
+
+    output['num_features'] = len(properties)
+
+    for i, (name, d) in enumerate(properties.items(), 1):
+        output[f"feat_name_{i}"] = name
+        output[f"feat_required_{i}"] = name in required
+        st.session_state["feat_required_{i}_changed"] = False
+        for key, value in d.items():
+            if key == "enum":
+                output[f"feat_{key}_{i}"] = ', '.join(value)
+            else:
+                output[f"feat_{key}_{i}"] = value
+
+    st.session_state["num_features_changed"] = False
+    st.session_state['uploaded_data'] = output
+
+
 def set_uploaded_data():
     if uploaded_file := st.session_state.get('uploaded_file'):
-        uploaded = json.loads(uploaded_file.read())
-
-        output = {}
-        output['func_name'] = get_nested(
-            uploaded, 'function', 'name')
-        output['func_desc'] = get_nested(
-            uploaded, 'function', 'description')
-
-        properties = get_nested(
-            uploaded, 'function', 'parameters', 'properties')
-
-        required = set(get_nested(
-            uploaded, 'function', 'parameters', 'required'))
-
-        output['num_features'] = len(properties)
-
-        for i, (name, d) in enumerate(properties.items(), 1):
-            output[f"feat_name_{i}"] = name
-            output[f"feat_required_{i}"] = name in required
-            st.session_state["feat_required_{i}_changed"] = False
-            for key, value in d.items():
-                if key == "enum":
-                    output[f"feat_{key}_{i}"] = ', '.join(value)
-                else:
-                    output[f"feat_{key}_{i}"] = value
-
-        st.session_state["num_features_changed"] = False
-        st.session_state['uploaded_data'] = output
+        set_tool_spec(json.loads(uploaded_file.read()))
 
 
 def get_uploaded(key):
@@ -96,9 +98,11 @@ def get_uploaded(key):
         return st.session_state['uploaded_data'].get(key)
 
 
-def load_examples():
+def load_example_data():
     st.session_state["context"] = utils.example_context
     st.session_state["prompt"] = utils.example_prompt
+    with open('get_prostate_biopsies.json') as f:
+        set_tool_spec(json.load(f))
 
 
 def get_or_reset(key, default=None, condition=True):
@@ -135,6 +139,14 @@ def get_openai_client():
         )
     except OpenAIError:
         st.error('Set environment variables OPENAI_API_KEY, OPENAI_BASE_URL')
+
+
+@st.dialog("Load Example Data")
+def load_example_modal():
+    st.write("""Load the example input text, prompt, and function
+    definition? This will overwrite any data that you have entered.""")
+    if st.button("Load", on_click=load_example_data):
+        st.rerun()
 
 
 with st.sidebar:
@@ -215,7 +227,8 @@ with st.form("content_form"):
         submitted = st.form_submit_button("Submit", on_click=submit_query)
 
 
-st.button("Load Example Text", on_click=load_examples)
+if st.button("Load Example Data"):
+    load_example_modal()
 
 
 col1, col2 = st.columns(2)
