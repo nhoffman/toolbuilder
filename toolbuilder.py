@@ -311,6 +311,15 @@ with col1:
                 value=get_or_reset(f"feat_enum_{i}"),
                 placeholder="Comma-separated list of values")
 
+        if getval(f"feat_type_{i}") == ParameterType.ARRAY.value:
+            items_type_options = [
+                t.value for t in ParameterType if t is not ParameterType.ARRAY]
+            items_type = get_or_reset(f"items_type_{i}", "number")
+            st.selectbox(
+                "Array items type", key=f"feat_array_{i}",
+                index=items_type_options.index(items_type),
+                options=items_type_options)
+
         feat_desc = st.text_area(
             "Feature description",
             key=f"feat_description_{i}", height=68,
@@ -333,6 +342,8 @@ with col2:
         if enum_vals := getval(f"feat_enum_{i}"):
             property["enum"] = list(
                 set(s.strip() for s in enum_vals.split(",")))
+        if items_type := getval(f"feat_array_{i}"):
+            property["items"] = {"type": items_type}
 
         feat_name = getval(f"feat_name_{i}") or f"feat_name_{i}"
         properties[feat_name] = property
