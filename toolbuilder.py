@@ -213,7 +213,7 @@ with st.form("content_form"):
         c1, c2, c3 = st.columns(3)
 
         with c1:
-            model = st.selectbox("Model", ['gpt-4o', 'gpt-4o-mini'], key="model")
+            model = st.selectbox("Model", ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1', 'gpt-4.1-mini'], key="model")
         with c2:
             temperature = st.slider("Temperature", 0.0, 2.0, 1.0, 0.1, key="temperature")
         with c3:
