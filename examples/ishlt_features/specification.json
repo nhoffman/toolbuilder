@@ -1,0 +1,50 @@
+{
+  "type": "function",
+  "function": {
+    "name": "ISHLT_features",
+    "description": "This function pulls features related to ISHLT scoring of pathology samples",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "ISHLT": {
+          "type": "string",
+          "description": "Extract the ISHLT grade associated with this clinical note, in the following groupings: \n0: No significant rejection\n1A: Focal mild rejection\n1B: Diffuse mild rejection\n2: Focal moderate rejection\n3A: Multifocal moderate rejection\n3B: Diffuse moderate rejection",
+          "enum": [
+            "3B",
+            "0",
+            "3A",
+            "1A",
+            "2",
+            "1B"
+          ]
+        },
+        "C3d": {
+          "type": "string",
+          "description": "Evaluate whether the sample  tested positive or negative for C3d, or was not tested. Return one of three responses: \nNP: If the sample did not undergo testing for C3d cells\n0: If the sample tested negative for C3d cells\n1: If the sample tested positive for C3d cells\n\nNote that C3d should only be called positive or negative if an immunofluorescent or immunohistochemical stain was performed. If there is no immuno-staining, return NP, even if histologic evidence suggests C3d would be negative. \n\nIf C3d staining of the microvasculature is mentioned, this alone does not mean the sample is C3d positive. C3d should only be called positive, if there is mention of immunopathologic features. "
+        },
+        "C4d": {
+          "type": "string",
+          "description": "Evaluate whether the sample  tested positive or negative for C4d, or was not tested. Return one of three responses: \nNP: If the sample did not undergo testing for C4d cells\n0: If the sample tested negative for C4d cells\n1: If the sample tested positive for C4d cells\n\nNote that C3d should only be called positive or negative if an immunofluorescent or immunohistochemical stain was performed. If there is no immuno-staining, return NP, even if histologic evidence suggests C4d would be negative. \n\nIf C4d staining of the microvasculature is mentioned, this alone does not mean the sample is C4d positive. C4d should only be called positive, if there is mention of immunopathologic features. "
+        },
+        "pAMR": {
+          "type": "string",
+          "description": "Categorize the pathologic diagnosis of antibody-mediated rejection (pAMR) in one of the following ways: \nNP: The sample did not undergo immunofluorescence or immunopathologic testing. This should be called even if histology suggests that pAMR is positive or negative, or a pAMR score is given. \n0: Negative for pathologic AMR; both histologic and immunopathologic studies are negative.\n1(H+): Histopathologic AMR alone. Histologic findings present but immunopathologic findings positive. \n1(I+): Immunopathologic AMR alone. Histologic findings negative, and immunopathologic findings positive. \n2: Pathologic AMR: Both histologic and immunopathologic findings positive. \n3: Severe pathologic AMR. This category recognizes the rare cases of severe AMR with histopathologic findings of interstitial hemorrhage, capillary fragmentation, mixed inflammatory infiltrates, endothelial cell pyknosis, and/or karyorrhexis and marked edema. The reported experience of the group was that these cases are associated with profound hemodynamic dysfunction and poor clinical outcomes. \n\nNote, if no immunopathology evaluation was performed then pAMR should be returned as NP. This should be done even if the histologic results suggested pAMR is 0.  E.g., the statement 'there are no histopathologic features to suggest antibody-mediated rejection' should still be called as pAMR = NP, unless another sentence directly means immunohistologic evidence, or that immunofluorescence was performed",
+          "enum": [
+            "3",
+            "0",
+            "1(I+)",
+            "NP",
+            "1(H+)",
+            "2"
+          ]
+        }
+      },
+      "required": [
+        "ISHLT",
+        "C3d",
+        "C4d",
+        "pAMR"
+      ]
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import os
 from enum import Enum
 import json
+from pathlib import Path
 
 from openai import OpenAI, OpenAIError
 import streamlit as st
@@ -99,10 +100,14 @@ def get_uploaded(key):
 
 
 def load_example_data():
-    st.session_state["context"] = utils.example_context
-    st.session_state["prompt"] = utils.example_prompt
-    with open('get_prostate_biopsies.json') as f:
+    data_dir = Path('examples') / st.session_state['example_data']
+    with open(data_dir / 'specification.json') as f:
         set_tool_spec(json.load(f))
+
+    with open(data_dir / 'context.txt') as f:
+        st.session_state["context"] = f.read()
+
+    st.session_state["prompt"] = "Extract data from this report"
 
 
 def get_or_reset(key, default=None, condition=True):
@@ -145,9 +150,16 @@ def get_openai_client():
 def load_example_modal():
     st.write("""Load the example input text, prompt, and function
     definition? This will overwrite any data that you have entered.""")
-    if st.button("Load", on_click=load_example_data):
-        st.rerun()
 
+    st.selectbox(
+        "Load Example",
+        ["ishlt_features", "prostate_biopsies"],
+        key="example_data"
+    )
+
+    if st.button("Load", on_click=load_example_data):
+        st.session_state['example_data_was_loaded'] = True
+        st.rerun()
 
 with st.sidebar:
     st.title("Feature Workbench")
@@ -213,7 +225,10 @@ with st.form("content_form"):
         c1, c2, c3 = st.columns(3)
 
         with c1:
-            model = st.selectbox("Model", ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1', 'gpt-4.1-mini'], key="model")
+            model = st.selectbox(
+                "Model",
+                ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4o', 'gpt-4o-mini'],
+                key="model")
         with c2:
             temperature = st.slider("Temperature", 0.0, 2.0, 1.0, 0.1, key="temperature")
         with c3:
@@ -226,15 +241,14 @@ with st.form("content_form"):
 
         submitted = st.form_submit_button("Submit", on_click=submit_query)
 
-
 col1, __ = st.columns(2)
 with col1:
-    subcol1, subcol2 = st.columns([0.3, 0.7], vertical_alignment="center")
-    with subcol1:
+    if st.session_state.get('example_data_was_loaded'):
+        st.write('Reload page to clear')
+        st.button("Clear all data", on_click=st.session_state.clear)
+    else:
         if st.button("Load Example Data"):
             load_example_modal()
-    with subcol2:
-        st.write('(Reload page to clear all)')
 
 col1, col2 = st.columns(2)
 

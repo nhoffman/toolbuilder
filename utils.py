@@ -7,42 +7,11 @@
 
 import logging
 import json
+from pathlib import Path
 
 from openai import OpenAI
 
 log = logging.getLogger(__name__)
-
-
-example_context = """
-A) Prostate, Right Base, core biopsy:
-- Prostatic adenocarcinoma.
-- Gleason score: 3+4=7
-- 0.1 cm total cancer of 2.1 cm total core length, involving 1 of 2 cores
-B) Prostate, Right Mid, core biopsy:
-- Benign prostatic tissue.
-C) Prostate, Right Apex, core biopsy:
-- Benign prostatic tissue.
-D) Prostate, Left Base, core biopsy:
-- Prostatic adenocarcinoma.
-- Gleason score: 3+4=7
-- 0.8 cm total cancer of 2.5 cm total core length, involving 2 of 2 cores
-E) Prostate, Left Mid, core biopsy:
-- Prostatic adenocarcinoma.
-- Gleason score: 3+4=7
-- 1.4 cm total cancer of 2.2 cm total core length, involving 2 of 2 cores
-F) Prostate, Left Apex, core biopsy:
-- Prostatic adenocarcinoma.
-- Gleason score: 3+4=7
-- 0.3 cm total cancer of 2.9 cm total core length, involving 1 of 2 cores
-G) Prostate, Lesion 1 (left base), core biopsy:
-- Prostatic adenocarcinoma.
-- Gleason score: 3+4=7
-- 1.2 cm total cancer of 2.0 cm total core length, involving 3 of 3 cores
-""".strip()
-
-example_prompt = """
-Extract the features from the pathology report
-""".strip()
 
 
 def get_features(client: OpenAI,
@@ -89,15 +58,20 @@ def feature_table(response: dict) -> list[dict]:
 def test_chat():
     client = OpenAI()
 
-    with open('get_prostate_biopsies.json') as f:
+    example = Path('examples/ishlt_features')
+
+    with open(example / 'specification.json') as f:
         tools = json.load(f)
+
+    with open(example / 'context.txt') as f:
+        context = f.read()
 
     response = get_features(
         client=client,
-        context=example_context,
-        prompt=example_prompt,
+        context=context,
+        prompt="Extract features from this pathology report",
         tools=[tools],
-        model='gpt-4o-mini',
+        model='gpt-4.1',
         temperature=1.0,
         n=1,
     )
