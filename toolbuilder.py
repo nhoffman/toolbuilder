@@ -381,7 +381,7 @@ with col2:
     if features := getval('features'):
         st.dataframe(
             features,
-            use_container_width=True,
+            width='stretch',
         )
 
     if response := st.session_state.get('response'):
