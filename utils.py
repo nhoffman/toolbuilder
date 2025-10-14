@@ -30,9 +30,9 @@ def get_features(client: OpenAI,
          'content': prompt},
     ]
 
-    response = client.chat.completions.create(
+    response = client.responses.create(
         model=model,
-        messages=messages,
+        input=messages,
         tools=tools,
         tool_choice='required',
         **kwargs
@@ -46,9 +46,6 @@ def feature_table(response: dict) -> list[dict]:
     for choice in response['choices']:
         for tool_call in choice['message']['tool_calls']:
             d = {}
-            if len(response['choices']) > 1:
-                d['choice_index'] = choice['index']
-
             d.update(json.loads(tool_call['function']['arguments']))
             output.append(d)
 

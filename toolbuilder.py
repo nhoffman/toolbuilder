@@ -1,4 +1,3 @@
-import os
 from enum import Enum
 import json
 from pathlib import Path
@@ -7,6 +6,17 @@ from openai import OpenAI, OpenAIError
 import streamlit as st
 
 import utils
+
+DEFAULT_MODEL = 'gpt-5'
+MODELS = [
+    'gpt-5',
+    'gpt-5-mini',
+    'gpt-4.1',
+    'gpt-4.1-mini',
+    'gpt-4o',
+    'gpt-4o-mini'
+    ]
+
 
 st.set_page_config(layout="wide")
 
@@ -29,19 +39,25 @@ def unwrap(text):
 
 def submit_query():
     if getval("context"):
+        tool_spec = getval('tool_spec')
+        model = getval('model', DEFAULT_MODEL)
+        args = {
+            'client': getval("client"),
+            'context': getval('context'),
+            'model': model,
+            'prompt': getval('prompt'),
+            'tools': [tool_spec]
+            }
+        if model != 'gpt-5':
+            # https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/
+            # reasoning?tabs=gpt-5%2Cpython%2Cpy#not-supported
+            args['temperature'] = getval('temperature', 1.0)
         try:
-            response = utils.get_features(
-                client=getval("client"),
-                context=getval('context'),
-                prompt=getval('prompt'),
-                tools=[getval('tool_spec')],
-                model=getval('model', 'gpt-4o'),
-                temperature=getval('temperature', 1.0),
-                n=getval('n_choices', 1),
-            )
+            response = utils.get_features(**args)
             st.session_state['response'] = response
             st.session_state['features'] = utils.feature_table(response)
         except Exception as e:
+            print(e)
             st.error(e)
 
 
@@ -161,6 +177,7 @@ def load_example_modal():
         st.session_state['example_data_was_loaded'] = True
         st.rerun()
 
+
 with st.sidebar:
     st.title("Feature Workbench")
     st.write(
@@ -187,10 +204,13 @@ with st.sidebar:
 
     if st.button("Test API Key"):
         try:
-            completion = getval('client').chat.completions.create(
+            completion = getval('client').responses.create(
                 model="gpt-4o-mini",
-                messages=[
-                    {"role": "user", "content": "What is the capital of France?"}
+                input=[
+                    {
+                        "role": "user",
+                        "content": "What is the capital of France?"
+                        }
                 ]
             )
             # st.write(completion.choices[0].message.content)
@@ -203,7 +223,7 @@ st.header('Feature extraction using OpenAI function calling')
 
 # st.write(st.session_state.get('uploaded_data'))
 
-with st.form("content_form"):
+with st.container(border=True):
     form_col1, form_col2 = st.columns(2)
     with form_col1:
         if "context" not in st.session_state:
@@ -221,25 +241,27 @@ with st.form("content_form"):
                 """Optional. Use this area to provide additional
                 instructions or examples for representing the output.
                 """))
-
-        c1, c2, c3 = st.columns(3)
-
-        with c1:
-            model = st.selectbox(
-                "Model",
-                ['gpt-5', 'gpt-5-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4o', 'gpt-4o-mini'],
-                key="model")
-        with c2:
-            temperature = st.slider("Temperature", 0.0, 2.0, 1.0, 0.1, key="temperature")
-        with c3:
-            n_choices = st.number_input(
-                "Number of choices",
-                key='n_choices',
-                value=1,
-                min_value=1, max_value=10,
-            )
-
-        submitted = st.form_submit_button("Submit", on_click=submit_query)
+        model = getval('model', DEFAULT_MODEL)
+        if model == 'gpt-5':
+            st.selectbox(
+                'Model',
+                MODELS,
+                index=MODELS.index(model),
+                key='model'
+                )
+        else:
+            c1, c2 = st.columns(2)
+            with c1:
+                st.selectbox(
+                    'Model',
+                    MODELS,
+                    index=MODELS.index(model),
+                    key='model'
+                    )
+            with c2:
+                temperature = st.slider(
+                    "Temperature", 0.0, 2.0, 1.0, 0.1, key="temperature")
+        submitted = st.button("Submit", on_click=submit_query)
 
 col1, __ = st.columns(2)
 with col1:
@@ -366,8 +388,8 @@ with col2:
 
     st.session_state['tool_spec'] = {
         "type": "function",
+        "name": st.session_state.get("func_name", "function_name"),
         "function": {
-            "name": st.session_state.get("func_name", "function_name"),
             "description": st.session_state.get("func_desc"),
             "parameters": {
                 "type": "object",
