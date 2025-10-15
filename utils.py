@@ -30,6 +30,8 @@ def get_features(client: OpenAI,
          'content': prompt},
     ]
 
+    print(tools)
+
     response = client.responses.create(
         model=model,
         input=messages,
@@ -43,11 +45,11 @@ def get_features(client: OpenAI,
 
 def feature_table(response: dict) -> list[dict]:
     output = []
-    for choice in response['choices']:
-        for tool_call in choice['message']['tool_calls']:
-            d = {}
-            d.update(json.loads(tool_call['function']['arguments']))
-            output.append(d)
+    print(response)
+    for t in response['tools']:
+        d = {}
+        d.update(json.loads(t['parameters']['properties']))
+        output.append(d)
 
     return output
 

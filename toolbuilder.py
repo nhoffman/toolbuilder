@@ -387,16 +387,14 @@ with col2:
             required.append(feat_name)
 
     st.session_state['tool_spec'] = {
-        "type": "function",
         "name": st.session_state.get("func_name", "function_name"),
-        "function": {
-            "description": st.session_state.get("func_desc"),
-            "parameters": {
-                "type": "object",
-                "properties": properties,
-                "required": required
-            }
-        }
+        "parameters": {
+            "type": "object",
+            "properties": properties,
+            "required": required
+        },
+        "type": "function",
+        "description": st.session_state.get("func_desc")
     }
 
     # display the pretty-printed value of tool_spec
