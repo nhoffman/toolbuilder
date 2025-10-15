@@ -16,7 +16,9 @@ MODELS = [
     'gpt-4o',
     'gpt-4o-mini'
     ]
-
+# Azure reasoning models have slightly different supported features
+# https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/reasoning
+AZURE_REASONING_MODELS = ['gpt-5', 'gpt-5-mini']
 
 st.set_page_config(layout="wide")
 
@@ -48,16 +50,13 @@ def submit_query():
             'prompt': getval('prompt'),
             'tools': [tool_spec]
             }
-        if model != 'gpt-5':
-            # https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/
-            # reasoning?tabs=gpt-5%2Cpython%2Cpy#not-supported
+        if model not in AZURE_REASONING_MODELS:
             args['temperature'] = getval('temperature', 1.0)
         try:
             response = utils.get_features(**args)
             st.session_state['response'] = response
             st.session_state['features'] = utils.feature_table(response)
         except Exception as e:
-            print(e)
             st.error(e)
 
 
@@ -242,7 +241,7 @@ with st.container(border=True):
                 instructions or examples for representing the output.
                 """))
         model = getval('model', DEFAULT_MODEL)
-        if model == 'gpt-5':
+        if model in AZURE_REASONING_MODELS:
             st.selectbox(
                 'Model',
                 MODELS,

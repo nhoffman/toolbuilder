@@ -30,8 +30,6 @@ def get_features(client: OpenAI,
          'content': prompt},
     ]
 
-    print(tools)
-
     response = client.responses.create(
         model=model,
         input=messages,
@@ -44,8 +42,8 @@ def get_features(client: OpenAI,
 
 
 def feature_table(response: dict) -> list[dict]:
-    print(response)
-    return [o['arguments'] for o in response['output'] if 'arguments' in o]
+    output = (o for o in response['output'] if 'arguments' in o)
+    return [json.loads(o['arguments']) for o in output]
 
 
 def test_chat():
