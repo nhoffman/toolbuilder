@@ -44,14 +44,8 @@ def get_features(client: OpenAI,
 
 
 def feature_table(response: dict) -> list[dict]:
-    output = []
     print(response)
-    for t in response['tools']:
-        d = {}
-        d.update(json.loads(t['parameters']['properties']))
-        output.append(d)
-
-    return output
+    return [o['arguments'] for o in response['output'] if 'arguments' in o]
 
 
 def test_chat():
