@@ -61,3 +61,8 @@ line like this (requires that `OPENAI_API_KEY` is defined):
 {'label': 'F', 'gleason_score': '3+4=7', 'biopsy_length': 2.9, 'cancer_length': 0.3, 'diagnosis': 'malignant'}
 {'label': 'G', 'gleason_score': '3+4=7', 'biopsy_length': 2.0, 'cancer_length': 1.2, 'diagnosis': 'malignant'}
 ```
+
+## Deploy
+
+Deployment to Streamlit community cloud is performed by launching the
+app locally and using the interactive "deploy" action.
