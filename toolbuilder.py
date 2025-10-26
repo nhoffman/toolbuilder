@@ -22,7 +22,6 @@ AZURE_REASONING_MODELS = ['gpt-5', 'gpt-5-mini']
 
 st.set_page_config(layout="wide")
 
-
 class ParameterType(Enum):
     STRING = "string"
     NUMBER = "number"
@@ -287,15 +286,16 @@ with col1:
     with subcol2:
         if num_features := get_num_features():
             del st.session_state['num_features']
+            st.session_state['num_features'] = num_features
         else:
             num_features = getval('num_features', 1)
 
         number_of_features = st.number_input(
             "Number of features",
             key='num_features',
-            value=num_features,
+            # value=num_features,
             min_value=1, max_value=20,
-            on_change=on_click_num_features,
+            on_change=on_click_num_features
         )
 
     st.text_area(
