@@ -22,6 +22,7 @@ AZURE_REASONING_MODELS = ['gpt-5', 'gpt-5-mini']
 
 st.set_page_config(layout="wide")
 
+
 class ParameterType(Enum):
     STRING = "string"
     NUMBER = "number"
@@ -132,14 +133,6 @@ def get_or_reset(key, default=None, condition=True):
         val = getval(key, default)
 
     return val
-
-
-def get_num_features():
-    if (st.session_state.get('uploaded_data')
-        and not getval('num_features_changed')):
-        return st.session_state['uploaded_data']['num_features']
-    else:
-        getval('num_features')
 
 
 def on_click_num_features():
@@ -284,16 +277,19 @@ with col1:
             placeholder="lowercase_with_underscores")
 
     with subcol2:
-        if num_features := get_num_features():
-            del st.session_state['num_features']
-            st.session_state['num_features'] = num_features
-        else:
-            num_features = getval('num_features', 1)
+        if 'num_features' not in st.session_state:
+            st.session_state['num_features'] = 1
+        if 'num_features_changed' not in st.session_state:
+            st.session_state['num_features_changed'] = False
+
+        if ('uploaded_data' in st.session_state and
+                not st.session_state['num_features_changed']):
+            uploaded_data = st.session_state['uploaded_data']
+            st.session_state['num_features'] = uploaded_data['num_features']
 
         number_of_features = st.number_input(
             "Number of features",
             key='num_features',
-            # value=num_features,
             min_value=1, max_value=20,
             on_change=on_click_num_features
         )
