@@ -3,22 +3,22 @@ import json
 from pathlib import Path
 
 from openai import OpenAI, OpenAIError
+import litellm.proxy.client
+import os
 import streamlit as st
 
 import utils
 
-DEFAULT_MODEL = 'gpt-5'
-MODELS = [
-    'gpt-5',
-    'gpt-5-mini',
-    'gpt-4.1',
-    'gpt-4.1-mini',
-    'gpt-4o',
-    'gpt-4o-mini'
-    ]
-# Azure reasoning models have slightly different supported features
-# https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/reasoning
-AZURE_REASONING_MODELS = ['gpt-5', 'gpt-5-mini']
+DEFAULT_MODEL = 'gpt-5.1-chat'
+
+litellm_proxy = litellm.proxy.client.Client(
+    base_url=os.environ['LITELLM_PROXY_URL'],
+    api_key=os.environ['LITELLM_PROXY_API_KEY']
+    )
+# load only azure models and available params
+models = litellm_proxy.models.info()
+models = (m for m in models if m['model_info']['litellm_provider'] == 'azure')
+models = sorted([m['model_name'] for m in models], reverse=True)
 
 st.set_page_config(layout="wide")
 
@@ -48,10 +48,9 @@ def submit_query():
             'context': getval('context'),
             'model': model,
             'prompt': getval('prompt'),
+            'temperature': getval('temperature', 1.0),
             'tools': [tool_spec]
             }
-        if model not in AZURE_REASONING_MODELS:
-            args['temperature'] = getval('temperature', 1.0)
         try:
             response = utils.get_features(**args)
             st.session_state['response'] = response
@@ -233,25 +232,17 @@ with st.container(border=True):
                 instructions or examples for representing the output.
                 """))
         model = getval('model', DEFAULT_MODEL)
-        if model in AZURE_REASONING_MODELS:
+        c1, c2 = st.columns(2)
+        with c1:
             st.selectbox(
                 'Model',
-                MODELS,
-                index=MODELS.index(model),
+                models,
+                index=models.index(model),
                 key='model'
                 )
-        else:
-            c1, c2 = st.columns(2)
-            with c1:
-                st.selectbox(
-                    'Model',
-                    MODELS,
-                    index=MODELS.index(model),
-                    key='model'
-                    )
-            with c2:
-                temperature = st.slider(
-                    "Temperature", 0.0, 2.0, 1.0, 0.1, key="temperature")
+        with c2:
+            temperature = st.slider(
+                "Temperature", 0.0, 2.0, 1.0, 0.1, key="temperature")
         submitted = st.button("Submit", on_click=submit_query)
 
 col1, __ = st.columns(2)
