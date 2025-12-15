@@ -3,22 +3,21 @@ import json
 from pathlib import Path
 
 from openai import OpenAI, OpenAIError
-import litellm.proxy.client
-import os
 import streamlit as st
 
 import utils
 
 DEFAULT_MODEL = 'gpt-5.1-chat'
 
-litellm_proxy = litellm.proxy.client.Client(
-    base_url=os.environ['LITELLM_PROXY_URL'],
-    api_key=os.environ['LITELLM_PROXY_API_KEY']
-    )
-# load only azure models and available params
-models = litellm_proxy.models.info()
-models = (m for m in models if m['model_info']['litellm_provider'] == 'azure')
-models = sorted([m['model_name'] for m in models], reverse=True)
+MODELS = [
+    'gpt-5',
+    'gpt-5-mini',
+    'gpt-5.1-chat',
+    'gpt-4.1',
+    'gpt-4.1-mini',
+    'gpt-4o',
+    'gpt-4o-mini'
+    ]
 
 st.set_page_config(layout="wide")
 
@@ -236,8 +235,8 @@ with st.container(border=True):
         with c1:
             st.selectbox(
                 'Model',
-                models,
-                index=models.index(model),
+                MODELS,
+                index=MODELS.index(model),
                 key='model'
                 )
         with c2:
