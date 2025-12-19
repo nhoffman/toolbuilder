@@ -71,16 +71,12 @@ def get_nested(d, *args):
 
 def set_tool_spec(tool_spec):
     output = {}
-    output['func_name'] = get_nested(
-        tool_spec, 'function', 'name')
-    output['func_desc'] = get_nested(
-        tool_spec, 'function', 'description')
+    output['func_name'] = get_nested(tool_spec, 'name')
+    output['func_desc'] = get_nested(tool_spec, 'description')
 
-    properties = get_nested(
-        tool_spec, 'function', 'parameters', 'properties')
+    properties = get_nested(tool_spec, 'parameters', 'properties')
 
-    required = set(get_nested(
-        tool_spec, 'function', 'parameters', 'required'))
+    required = set(get_nested(tool_spec, 'parameters', 'required'))
 
     output['num_features'] = len(properties)
 
