@@ -31,6 +31,7 @@ import sys
 import json
 from pathlib import Path
 import csv
+import hashlib
 
 from openai import OpenAI
 
@@ -58,7 +59,7 @@ def get_features(client: OpenAI,
         **kwargs
     )
 
-    return response.to_dict()
+    return response
 
 
 def feature_table(response: dict) -> list[dict]:
@@ -71,16 +72,23 @@ def main(arguments):
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('schema', help="json file with feature schema",
-                        type=argparse.FileType('r'))
+    parser.add_argument('schema', help="json file with feature schema")
     parser.add_argument('-i', '--infile', help="A single input file")
     parser.add_argument('-d', '--dirname', help="A directory of input files")
     parser.add_argument('-o', '--outfile', help="Output file",
                         default=sys.stdout, type=argparse.FileType('w'))
     parser.add_argument('-m', '--model', help="Model name",
-                        default='gpt-4.1')
+                        default='gpt-5.1')
+    parser.add_argument('--cache-dir', default="extract_batch_cache",
+                        help="Model name")
 
     args = parser.parse_args(arguments)
+
+    schema_file = Path(args.schema)
+    schema_contents = schema_file.read_text()
+    schema_hash = hashlib.md5(schema_contents.encode('utf-8')).hexdigest()
+    cache_dir = Path(args.cache_dir) / f'{schema_file.stem}-{schema_hash}'
+    Path(cache_dir).mkdir(parents=True, exist_ok=True)
 
     if not (args.infile or args.dirname):
         parser.error('Either -i/--infile or -d/--dirname must be specified')
@@ -88,31 +96,39 @@ def main(arguments):
     files = [Path(args.infile)] if args.infile else []
     if args.dirname:
         files.extend(
-            p for p in Path(args.dirname).iterdir() if p.is_file()
+            p for p in Path(args.dirname).iterdir()
+            if p.is_file() and p.suffix.lower() in {'.txt', '.md'}
         )
 
     client = OpenAI()
 
-    schema = json.load(args.schema)
+    schema = json.loads(schema_contents)
 
     fieldnames = ['filename', 'item'] + list(schema['parameters']['properties'].keys())
-    writer = csv.DictWriter(args.outfile, fieldnames=fieldnames)
+    writer = csv.DictWriter(args.outfile, fieldnames=fieldnames, extrasaction='ignore')
     writer.writeheader()
 
     for infile in files:
-        print(f'Processing {infile}...', file=sys.stderr)
-        features = get_features(
-            client=client,
-            content=infile.read_text(),
-            tools=[schema],
-            model=args.model,
-        )
+        cache_file = cache_dir / f'{infile.stem}.json'
+        if cache_file.exists():
+            print(f'Loading cached results for {infile}...', file=sys.stderr)
+            features = json.loads(cache_file.read_text())
+        else:
+            print(f'Processing {infile}...', file=sys.stderr)
+            response = get_features(
+                client=client,
+                content=infile.read_text(),
+                tools=[schema],
+                model=args.model,
+            )
+            features = response.to_dict()
+            cache_file.write_text(response.to_json())
 
         for i, feature in enumerate(feature_table(features), 1):
             tab = {'filename': infile.name, 'item': i}
             tab.update({k: '' for k in fieldnames})  # ensure all fields present
             tab.update(feature)
-            writer.writerow(tab, extrasaction='ignore')
+            writer.writerow(tab)
 
 
 if __name__ == '__main__':
