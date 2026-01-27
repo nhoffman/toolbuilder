@@ -7,12 +7,14 @@ import streamlit as st
 
 import utils
 
-DEFAULT_MODEL = 'gpt-5.1-chat'
+DEFAULT_MODEL = 'gpt-5.2-chat'
 
 MODELS = [
     'gpt-5',
     'gpt-5-mini',
     'gpt-5.1-chat',
+    'gpt-5.2',
+    'gpt-5.2-chat',
     'gpt-4.1',
     'gpt-4.1-mini',
     'gpt-4o',
@@ -61,7 +63,8 @@ def submit_query():
 def get_nested(d, *args):
     d = d.copy()
     for key in args:
-        if d := d.get(key):
+        if key in d:
+            d = d[key]
             continue
         else:
             return None
@@ -104,7 +107,7 @@ def get_uploaded(key):
     corresponding field is empty.
 
     """
-    if st.session_state.get('uploaded_data') and not st.session_state.get(key):
+    if st.session_state.get('uploaded_data'):
         return st.session_state['uploaded_data'].get(key)
 
 
@@ -159,7 +162,6 @@ def load_example_modal():
     )
 
     if st.button("Load", on_click=load_example_data):
-        st.session_state['example_data_was_loaded'] = True
         st.rerun()
 
 
@@ -242,12 +244,12 @@ with st.container(border=True):
 
 col1, __ = st.columns(2)
 with col1:
-    if st.session_state.get('example_data_was_loaded'):
+    if st.session_state.get('example_data_was_loaded', False):
         st.write('Reload page to clear')
         st.button("Clear all data", on_click=st.session_state.clear)
     else:
-        if st.button("Load Example Data"):
-            load_example_modal()
+        if st.button("Load Example Data", on_click=load_example_modal):
+            st.session_state['example_data_was_loaded'] = True
 
 col1, col2 = st.columns(2)
 
@@ -298,9 +300,9 @@ with col1:
 
         subcol1, subcol2, subcol3 = st.columns(3)
         with subcol1:
+            st.session_state[f"feat_name_{i}"] = feat_name
             st.text_input(
                 "Feature name", key=f"feat_name_{i}",
-                value=feat_name,
                 placeholder="lowercase_with_underscores")
             if not feat_name:
                 st.error('A name is required')
@@ -314,18 +316,18 @@ with col1:
                 options=feat_type_options)
 
         with subcol3:
+            st.session_state[f"feat_required_{i}"] = bool(
+                get_or_reset(
+                    f"feat_required_{i}",
+                    condition=not getval(f"feat_required_{i}_changed")))
             st.toggle(
                 "Required", key=f"feat_required_{i}",
-                value=get_or_reset(
-                    f"feat_required_{i}",
-                    condition=not getval(f"feat_required_{i}_changed")
-                ),
                 on_change=on_click_required_changed, args=(i,))
 
         if getval(f"feat_type_{i}") == ParameterType.STRING.value:
+            st.session_state[f"feat_enum_{i}"] = get_or_reset(f"feat_enum_{i}")
             st.text_input(
                 "Enum values", key=f"feat_enum_{i}",
-                value=get_or_reset(f"feat_enum_{i}"),
                 placeholder="Comma-separated list of values")
 
         if getval(f"feat_type_{i}") == ParameterType.ARRAY.value:
@@ -337,10 +339,11 @@ with col1:
                 index=items_type_options.index(items_type),
                 options=items_type_options)
 
+        st.session_state[f"feat_description_{i}"] = get_or_reset(
+            f"feat_description_{i}")
         feat_desc = st.text_area(
             "Feature description",
             key=f"feat_description_{i}", height=68,
-            value=get_or_reset(f"feat_description_{i}"),
             placeholder=unwrap(
                 """Describe the feature to be extracted into this field.
                 """))
